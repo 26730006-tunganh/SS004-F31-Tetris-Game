@@ -111,21 +111,33 @@ void draw() {
     for (int j = 0; j < W; j++)
       cout << board[i][j];
 }
-void removeLine() {
-  int i, j;
-  for (i = H - 2; i > 0; i--) {
-    for (j = 0; j < W; j++)
-      if (board[i][j] == ' ')
-        break;
-    if (j == W) {
-      for (int ii = i; ii > 0; ii--)
-        for (int jj = 0; jj < W; jj++)
-          board[ii][jj] = board[ii - 1][jj];
-      i++;
-      draw();
-      _sleep(200);
+void removeLine(){
+    int i, j;
+    for (i = H - 2; i > 0; i--) {
+        // Kiểm tra xem hàng i có đầy không (từ cột 1 đến W-2)
+        for (j = 1; j < W - 1; j++) {
+            if (board[i][j] == ' ') break;
+        }
+        
+        // Nếu hàng i đã đầy (j chạy hết đến W-1 nghĩa là không tìm thấy ô trống nào)
+        if (j == W - 1) {
+            // Dịch chuyển các dòng phía trên xuống
+            for (int ii = i; ii > 0; ii--) {
+                for (int jj = 1; jj < W - 1; jj++) {
+                    if (ii == 1) {
+                        // Nếu là hàng sát đỉnh nhất, làm trống nó thay vì copy dấu # từ hàng 0
+                        board[ii][jj] = ' ';
+                    } else {
+                        // Các hàng khác copy bình thường từ hàng phía trên
+                        board[ii][jj] = board[ii-1][jj];
+                    }
+                }
+            }
+            i++; // Kiểm tra lại chính dòng này sau khi dòng trên rơi xuống
+            draw();
+            _sleep(200);
+        }
     }
-  }
 }
 
 int main() {
