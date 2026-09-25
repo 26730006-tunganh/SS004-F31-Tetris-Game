@@ -141,6 +141,7 @@ void removeLine()
 int main()
 {
   srand(time(0));
+  int dropSpeed = 500;
   x = 5;
   y = 0;
   b = rand() % 7;
@@ -166,13 +167,16 @@ int main()
     {
       block2Board();
       removeLine();
+      if (dropSpeed > 100) {
+        dropSpeed -= 20;
+      }
       x = 5;
       y = 0;
       b = rand() % 7;
     }
     block2Board();
     draw();
-    _sleep(500);
+    _sleep(dropSpeed);
   }
   return 0;
 }
