@@ -1,9 +1,10 @@
 #include <conio.h>
+// #include "conio.h"
 #include <iostream>
 
 using namespace std;
 #define H 20
-#define W 15
+#define W 20
 char board[H][W] = {};
 
 int x, y, b;
@@ -71,10 +72,12 @@ char blocks[][4][4] = {{{' ', 'I', ' ', ' '},
                         {' ', ' ', 'L', ' '},
                         {'L', 'L', 'L', ' '},
                         {' ', ' ', ' ', ' '}}};
-bool canMove(int dx, int dy) {
+bool canMove(int dx, int dy)
+{
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++)
-      if (blocks[b][i][j] != ' ') {
+      if (blocks[b][i][j] != ' ')
+      {
         int xt = x + j + dx;
         int yt = y + i + dy;
         if (xt < 1 || xt >= W - 1 || yt >= H - 1)
@@ -84,19 +87,22 @@ bool canMove(int dx, int dy) {
       }
   return true;
 }
-void block2Board() {
+void block2Board()
+{
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++)
       if (blocks[b][i][j] != ' ')
         board[y + i][x + j] = blocks[b][i][j];
 }
-void boardDelBlock() {
+void boardDelBlock()
+{
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 4; j++)
       if (blocks[b][i][j] != ' ')
         board[y + i][x + j] = ' ';
 }
-void initBoard() {
+void initBoard()
+{
   for (int i = 0; i < H; i++)
     for (int j = 0; j < W; j++)
       if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
@@ -104,51 +110,46 @@ void initBoard() {
       else
         board[i][j] = ' ';
 }
-void draw() {
+void draw()
+{
   system("cls");
 
   for (int i = 0; i < H; i++, cout << endl)
     for (int j = 0; j < W; j++)
-      cout << board[i][j];
+      cout << board[i][j] << board[i][j];
 }
-void removeLine(){
-    int i, j;
-    for (i = H - 2; i > 0; i--) {
-        // Kiểm tra xem hàng i có đầy không (từ cột 1 đến W-2)
-        for (j = 1; j < W - 1; j++) {
-            if (board[i][j] == ' ') break;
-        }
-        
-        // Nếu hàng i đã đầy (j chạy hết đến W-1 nghĩa là không tìm thấy ô trống nào)
-        if (j == W - 1) {
-            // Dịch chuyển các dòng phía trên xuống
-            for (int ii = i; ii > 0; ii--) {
-                for (int jj = 1; jj < W - 1; jj++) {
-                    if (ii == 1) {
-                        // Nếu là hàng sát đỉnh nhất, làm trống nó thay vì copy dấu # từ hàng 0
-                        board[ii][jj] = ' ';
-                    } else {
-                        // Các hàng khác copy bình thường từ hàng phía trên
-                        board[ii][jj] = board[ii-1][jj];
-                    }
-                }
-            }
-            i++; // Kiểm tra lại chính dòng này sau khi dòng trên rơi xuống
-            draw();
-            _sleep(200);
-        }
+void removeLine()
+{
+  int i, j;
+  for (i = H - 2; i > 0; i--)
+  {
+    for (j = 0; j < W; j++)
+      if (board[i][j] == ' ')
+        break;
+    if (j == W)
+    {
+      for (int ii = i; ii > 0; ii--)
+        for (int jj = 0; jj < W; jj++)
+          board[ii][jj] = board[ii - 1][jj];
+      i++;
+      draw();
+      _sleep(200);
     }
 }
 
-int main() {
+int main()
+{
   srand(time(0));
+  int dropSpeed = 500;
   x = 5;
   y = 0;
   b = rand() % 7;
   initBoard();
-  while (1) {
+  while (1)
+  {
     boardDelBlock();
-    if (kbhit()) {
+    if (kbhit())
+    {
       char c = getch();
       if (c == 'a' && canMove(-1, 0))
         x--;
@@ -161,16 +162,20 @@ int main() {
     }
     if (canMove(0, 1))
       y++;
-    else {
+    else
+    {
       block2Board();
       removeLine();
+      if (dropSpeed > 100) {
+        dropSpeed -= 20;
+      }
       x = 5;
       y = 0;
       b = rand() % 7;
     }
     block2Board();
     draw();
-    _sleep(500);
+    _sleep(dropSpeed);
   }
   return 0;
 }
