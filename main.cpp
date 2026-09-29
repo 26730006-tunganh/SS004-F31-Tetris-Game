@@ -9,6 +9,8 @@ using namespace std;
 #define H 20
 #define W 20
 
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
 char board[H][W] = {};
 
 int x, y, b;
@@ -174,20 +176,102 @@ void initBoard()
 
 void draw()
 {
-  system("cls");
+  system("clear");
 
+  // Viền trên
+  SetConsoleTextAttribute(
+      hConsole,
+      FOREGROUND_RED |
+          FOREGROUND_GREEN |
+          FOREGROUND_BLUE);
+
+  cout << "┌";
+
+  for (int j = 0; j < W; j++)
+    cout << "──";
+
+  cout << "┐" << endl;
+
+  // Board
   for (int i = 0; i < H; i++)
   {
+    cout << "│";
+
     for (int j = 0; j < W; j++)
     {
-      cout << board[i][j] << board[i][j];
+      char cell = board[i][j];
+
+      // Tường
+      if (cell == '#')
+      {
+        cout << "  ";
+      }
+
+      // Ô trống
+      else if (cell == ' ')
+      {
+        cout << "  ";
+      }
+
+      // Block
+      else
+      {
+        switch (cell)
+        {
+        case 'I':
+          cout << "\033[96m";
+          break;
+
+        case 'O':
+          cout << "\033[93m";
+          break;
+
+        case 'T':
+          cout << "\033[95m";
+          break;
+
+        case 'S':
+          cout << "\033[92m";
+          break;
+
+        case 'Z':
+          cout << "\033[91m";
+          break;
+
+        case 'J':
+          cout << "\033[94m";
+          break;
+
+        case 'L':
+          cout << "\033[38;5;208m";
+          break;
+        }
+
+        cout << "██";
+
+        cout << "\033[0m";
+      }
     }
 
-    cout << endl;
+    cout << "│" << endl;
   }
 
+  // Viền dưới
+  cout << "└";
+
+  for (int j = 0; j < W; j++)
+    cout << "──";
+
+  cout << "┘" << endl;
+
   cout << endl;
-  cout << "A: Left   D: Right   X: Down   W: Rotate   Q: Quit";
+
+  cout << "A: Left   ";
+  cout << "D: Right   ";
+  cout << "X: Down   ";
+  cout << "W: Rotate   ";
+  cout << "Q: Quit";
+
   cout << endl;
 }
 
