@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include "windows.h"
 
+#include "tetromino.h"
+
 using namespace std;
 
 #define H 20
@@ -12,58 +14,44 @@ using namespace std;
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 char board[H][W] = {};
+Block* currentBlock = nullptr;
 
-int x, y, b;
 
-char blocks[7][4][4] =
+// Tạo block ngẫu nhiên
+Block* createBlock()
+{
+    int type = rand() % 7;
+
+    switch (type)
     {
-        {{' ', 'I', ' ', ' '},
-         {' ', 'I', ' ', ' '},
-         {' ', 'I', ' ', ' '},
-         {' ', 'I', ' ', ' '}},
+    case 0: return new IBlock();
+    case 1: return new OBlock();
+    case 2: return new TBlock();
+    case 3: return new SBlock();
+    case 4: return new ZBlock();
+    case 5: return new JBlock();
+    case 6: return new LBlock();
+    }
 
-        {{' ', ' ', ' ', ' '},
-         {' ', 'O', 'O', ' '},
-         {' ', 'O', 'O', ' '},
-         {' ', ' ', ' ', ' '}},
+    return nullptr;
+}
 
-        {{' ', 'T', ' ', ' '},
-         {'T', 'T', 'T', ' '},
-         {' ', ' ', ' ', ' '},
-         {' ', ' ', ' ', ' '}},
-
-        {{' ', 'S', 'S', ' '},
-         {'S', 'S', ' ', ' '},
-         {' ', ' ', ' ', ' '},
-         {' ', ' ', ' ', ' '}},
-
-        {{'Z', 'Z', ' ', ' '},
-         {' ', 'Z', 'Z', ' '},
-         {' ', ' ', ' ', ' '},
-         {' ', ' ', ' ', ' '}},
-
-        {{'J', ' ', ' ', ' '},
-         {'J', 'J', 'J', ' '},
-         {' ', ' ', ' ', ' '},
-         {' ', ' ', ' ', ' '}},
-
-        {{' ', ' ', 'L', ' '},
-         {'L', 'L', 'L', ' '},
-         {' ', ' ', ' ', ' '},
-         {' ', ' ', ' ', ' '}}};
-
+// Kiểm tra di chuyển
 bool canMove(int dx, int dy)
 {
+  if (currentBlock == nullptr)
+    return false;
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 4; j++)
     {
-      if (blocks[b][i][j] != ' ')
+      if (currentBlock->getCell(i, j) != ' ')
       {
-        int xt = x + j + dx;
-        int yt = y + i + dy;
+        int xt = currentBlock->getX() + j + dx;
+        int yt = currentBlock->getY() + i + dy;
 
-        if (xt < 1 || xt >= W - 1 || yt >= H - 1)
+        if (xt < 1 || xt >= W - 1 ||
+            yt < 0 || yt >= H - 1)
           return false;
 
         if (board[yt][xt] != ' ')
@@ -75,89 +63,105 @@ bool canMove(int dx, int dy)
   return true;
 }
 
+// Kiểm tra vị trí sau khi xoay
 bool canRotate()
 {
+  if (currentBlock == nullptr)
+    return false;
   char temp[4][4];
 
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      temp[j][3 - i] = blocks[b][i][j];
-    }
-  }
+  currentBlock->getRotatedShape(temp);
 
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 4; j++)
     {
       if (temp[i][j] != ' ')
-      {
-        int xt = x + j;
-        int yt = y + i;
+        continue;
+      int xt = currentBlock->getX() + j;
+      int yt = currentBlock->getY() + i;
 
-        if (xt < 1 || xt >= W - 1 || yt < 0 || yt >= H - 1)
-          return false;
+      if (xt < 1 || xt >= W - 1 || yt < 0 || yt >= H - 1)
+        return false;
 
-        if (board[yt][xt] != ' ')
-          return false;
-      }
+      if (board[yt][xt] != ' ')
+        return false;
+      
     }
   }
 
   return true;
 }
 
+// Xoay block thông qua đa hình
 void rotateBlock()
 {
-  if (!canRotate())
+  if (currentBlock == nullptr)
     return;
-
-  char temp[4][4];
-
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
+  if (canRotate())
     {
-      temp[j][3 - i] = blocks[b][i][j];
+        currentBlock->rotate();
     }
-  }
-
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 4; j++)
-    {
-      blocks[b][i][j] = temp[i][j];
-    }
-  }
 }
 
+// Ghi block vào board
 void block2Board()
 {
+  if (currentBlock == nullptr)
+    return;
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 4; j++)
     {
-      if (blocks[b][i][j] != ' ')
+      char cell = currentBlock->getCell(i, j);
+
+      if (cell != ' ')
       {
-        board[y + i][x + j] = blocks[b][i][j];
+        int xt = currentBlock->getX() + j;
+        int yt = currentBlock->getY() + i;
+
+        if (xt >= 0 && xt < W &&
+            yt >= 0 && yt < H)
+        {
+          board[yt][xt] = cell;
+        }
       }
     }
   }
 }
 
+// Xóa block đang rơi khỏi board
 void boardDelBlock()
 {
+  if (currentBlock == nullptr)
+    return;
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 4; j++)
     {
-      if (blocks[b][i][j] != ' ')
+      if (currentBlock->getCell(i, j) != ' ')
       {
-        board[y + i][x + j] = ' ';
+        int xt = currentBlock->getX() + j;
+        int yt = currentBlock->getY() + i;
+
+        if (xt >= 1 && xt < W - 1 &&
+            yt >= 0 && yt < H - 1)
+        {
+          board[yt][xt] = ' ';
+        }
       }
     }
   }
+}
+
+// Khóa block hiện tại vào board
+void lockBlock()
+{
+    if (currentBlock == nullptr)
+        return;
+
+    delete currentBlock;
+    currentBlock = nullptr;
 }
 
 void initBoard()
@@ -176,7 +180,7 @@ void initBoard()
 
 void draw()
 {
-  system("clear");
+  system("cls");
 
   // Viền trên
   SetConsoleTextAttribute(
@@ -316,11 +320,11 @@ int main()
 
   int dropSpeed = 500;
 
-  x = 5;
-  y = 0;
-  b = rand() % 7;
+  
 
   initBoard();
+
+  currentBlock = createBlock();
 
   while (1)
   {
@@ -328,16 +332,16 @@ int main()
 
     if (kbhit())
     {
-      char c = getch();
+      char c = _getch();
 
       if (c == 'a' && canMove(-1, 0))
-        x--;
+        currentBlock->move(-1, 0);
 
       if (c == 'd' && canMove(1, 0))
-        x++;
+        currentBlock->move(1, 0);
 
       if (c == 'x' && canMove(0, 1))
-        y++;
+        currentBlock->move(0, 1);
 
       if (c == 'w')
         rotateBlock();
@@ -348,20 +352,25 @@ int main()
 
     if (canMove(0, 1))
     {
-      y++;
+      currentBlock->move(0, 1);
     }
     else
     {
       block2Board();
-
+      lockBlock();
       removeLine();
 
       if (dropSpeed > 100)
         dropSpeed -= 20;
 
-      x = 5;
-      y = 0;
-      b = rand() % 7;
+      currentBlock = createBlock();
+
+      if (!canMove(0, 0))
+      {
+        cout << "GAME OVER!" << endl;
+        break;
+      }
+
     }
 
     block2Board();
@@ -370,6 +379,10 @@ int main()
 
     Sleep(dropSpeed);
   }
+  delete currentBlock;
+  currentBlock = nullptr;
+
+  system("pause");
 
   return 0;
 }
